@@ -1,95 +1,95 @@
-# TCC - Fine-Tuning de Modelo para Geração de Código em Microsserviços TypeScript
+# TCC - Fine-Tuning of a Model for Code Generation in TypeScript Microservices
 
-## Descrição geral
+## General description
 
-Este projeto foi desenvolvido como Trabalho de Conclusão de Curso com o objetivo de criar um modelo de linguagem especializado em gerar código para microsserviços em TypeScript. A ideia central é utilizar um modelo base de código (Qwen/Qwen2.5-Coder-3B), coletar repositórios de projetos reais, transformar esse material em um dataset de treinamento e aplicar técnicas de adaptação eficiente com QLoRA para melhorar a capacidade do modelo de completar trechos de código, seguir padrões de estrutura e gerar arquivos coerentes para contextos de microsserviços.
+This project was developed as a Final Course Project with the goal of creating a language model specialized in generating code for TypeScript microservices. The central idea is to use a base code model (Qwen/Qwen2.5-Coder-3B), collect repositories from real projects, transform that material into a training dataset, and apply efficient adaptation techniques with QLoRA to improve the model's ability to complete code snippets, follow structural patterns, and generate coherent files for microservice contexts.
 
-O fluxo do projeto é:
+The project flow is:
 
-1. Coleta de repositórios que representam microsserviços em TypeScript.
-2. Download e filtragem dos arquivos relevantes.
-3. Limpeza e organização do conteúdo em um dataset em JSONL.
-4. Fine-tuning do modelo usando LoRA/QLoRA com Hugging Face.
-5. Teste de geração e completamento de código com prompt específico.
+1. Collection of repositories that represent TypeScript microservices.
+2. Download and filtering of relevant files.
+3. Cleaning and organization of content into a JSONL dataset.
+4. Fine-tuning the model using LoRA/QLoRA with Hugging Face.
+5. Testing generation and code completion with a specific prompt.
 
-Em resumo, o projeto busca reduzir a lacuna entre um modelo geral de código e a necessidade de um modelo mais alinhado com padrões de arquitetura de microsserviços em TypeScript, especialmente em cenários de autocompletar trechos de código e gerar estruturas iniciais de módulos, controllers, serviços e interfaces.
+In summary, the project aims to reduce the gap between a general code model and the need for a model better aligned with TypeScript microservice architecture patterns, especially in scenarios involving code completion and generation of initial structures for modules, controllers, services, and interfaces.
 
 ---
 
-## Arquitetura de pastas
+## Folder architecture
 
-A estrutura do repositório está organizada da seguinte forma:
+The repository is organized as follows:
 
 ```text
 .
 ├── data/
-│   ├── data.csv                     # CSV original com links de repositórios utilizados como fonte
-│   ├── dataset_clean.jsonl          # Dataset final limpo em formato JSONL para treinamento
-│   ├── dataset_head.txt             # Amostra do dataset para validação rápida
-│   ├── training_data_amostra.txt    # Trechos amostrados para testes/manutenção
-│   └── training_data.txt            # Dados de treino consolidados para uso em experimentos
+│   ├── data.csv                     # Original CSV with repository links used as the source
+│   ├── dataset_clean.jsonl          # Final cleaned dataset in JSONL format for training
+│   ├── dataset_head.txt             # Dataset sample for quick validation
+│   ├── training_data_amostra.txt    # Sample snippets for tests and maintenance
+│   └── training_data.txt            # Consolidated training data for experiments
 │
-├── modelo_microsservicos_qlora/
-│   ├── adapter_config.json          # Configuração do adaptador LoRA
-│   ├── adapter_model.safetensors    # Pesos do adaptador treinado
-│   ├── chat_template.jinja          # Template do chat do modelo
-│   ├── README.md                    # Documentação do adapter/modelo
-│   ├── tokenizer_config.json        # Configuração do tokenizer
-│   └── tokenizer.json               # Tokenizer serializado
+├── microservices_model_qlora/
+│   ├── adapter_config.json          # LoRA adapter configuration
+│   ├── adapter_model.safetensors    # Trained adapter weights
+│   ├── chat_template.jinja          # Model chat template
+│   ├── README.md                    # Adapter/model documentation
+│   ├── tokenizer_config.json        # Tokenizer configuration
+│   └── tokenizer.json               # Serialized tokenizer
 │
-├── inferencia.py                    # Carrega o modelo base + adapter e gera código a partir de um prompt
-├── process_dataset.py               # Filtra e organiza os arquivos de repositórios em dataset limpo
-├── requirements.txt                 # Dependências do projeto
-├── testar_checkpoint.py             # Testa um checkpoint específico do treinamento
-├── training.py                      # Script principal de fine-tuning com QLoRA
-├── readme.md                        # Documentação do projeto
-└── .venv/                           # Ambiente virtual local (opcional)
+├── inferencia.py                   # Loads the base model + adapter and generates code from a prompt
+├── process_dataset.py              # Filters and organizes repository files into a clean dataset
+├── requirements.txt                # Project dependencies
+├── testar_checkpoint.py            # Tests a specific training checkpoint
+├── training.py                     # Main QLoRA fine-tuning script
+├── readme.md                       # Project documentation
+└── .venv/                          # Local virtual environment (optional)
 ```
 
-### Descrição dos principais arquivos
+### Description of the main files
 
 - `process_dataset.py`
-  - lê um CSV com URLs de repositórios;
-  - baixa os arquivos ZIP dos projetos;
-  - filtra arquivos relevantes para TypeScript e ignora diretórios como `node_modules`, `dist`, `build`, etc.;
-  - salva o conteúdo em `data/dataset_clean.jsonl`.
+  - reads a CSV with repository URLs;
+  - downloads the ZIP archives from the projects;
+  - filters relevant TypeScript files and ignores directories such as `node_modules`, `dist`, `build`, etc.;
+  - saves the content in `data/dataset_clean.jsonl`.
 
 - `training.py`
-  - carrega o modelo base `Qwen/Qwen2.5-Coder-3B`;
-  - configura quantização 4-bit com BitsAndBytes;
-  - usa LoRA com `peft` e treino supervisionado com `trl.SFTTrainer`;
-  - salva adaptador e checkpoints em `modelo_microsservicos_qlora`;
-  - automaticamente retoma o último checkpoint, se existir.
+  - loads the base model `Qwen/Qwen2.5-Coder-3B`;
+  - configures 4-bit quantization with BitsAndBytes;
+  - uses LoRA with `peft` and supervised training with `trl.SFTTrainer`;
+  - saves the adapter and checkpoints in `microservices_model_qlora`;
+  - automatically resumes the latest checkpoint if it exists.
 
 - `inferencia.py`
-  - carrega o modelo base e o adaptador treinado;
-  - recebe um prompt de código;
-  - gera continuação/complemento do trecho em linguagem TypeScript.
+  - loads the base model and the trained adapter;
+  - receives a code prompt;
+  - generates a continuation/completion for a TypeScript code snippet.
 
 - `testar_checkpoint.py`
-  - usado para testar um checkpoint específico, útil para validar o modelo em uma etapa intermediária do treinamento.
+  - used to test a specific checkpoint, useful for validating the model at an intermediate training stage.
 
 - `data/`
-  - armazena os dados brutos e processados que alimentam o treinamento.
+  - stores the raw and processed data that feeds the training pipeline.
 
-- `modelo_microsservicos_qlora/`
-  - diretório contendo os artefatos gerados pelo treinamento do modelo adaptado.
+- `microservices_model_qlora/`
+  - directory containing the artifacts generated by the trained model adapter.
 
 ---
 
-## Requerimentos
+## Requirements
 
-### Ambiente
+### Environment
 
-- Python 3.10 ou superior
-- Windows 10/11 ou Linux
-- NVIDIA GPU com suporte CUDA (recomendado)
-- 16 GB de RAM ou mais
-- 8 GB de VRAM como mínimo recomendado para execução com quantização 4-bit
+- Python 3.10 or higher
+- Windows 10/11 or Linux
+- NVIDIA GPU with CUDA support (recommended)
+- 16 GB of RAM or more
+- 8 GB of VRAM as a minimum recommended for execution with 4-bit quantization
 
-### Dependências principais
+### Main dependencies
 
-O projeto utiliza as seguintes bibliotecas:
+The project uses the following libraries:
 
 - `torch`
 - `transformers`
@@ -102,15 +102,15 @@ O projeto utiliza as seguintes bibliotecas:
 - `tqdm`
 - `accelerate`
 
-Todas as dependências estão listadas em `requirements.txt`.
+All dependencies are listed in `requirements.txt`.
 
 ---
 
-## Como rodar
+## How to run
 
-### 1. Clonar e preparar o ambiente
+### 1. Clone and prepare the environment
 
-No PowerShell:
+In PowerShell:
 
 ```powershell
 cd C:\Users\User\Documents\projects\tcc
@@ -119,78 +119,78 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Se estiver em Linux/macOS:
+If you are on Linux/macOS:
 
 ```bash
-cd /caminho/para/o/projeto
+cd /path/to/project
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Preparar o dataset
+### 2. Prepare the dataset
 
-O script `process_dataset.py` coleta repositórios e cria o arquivo `data/dataset_clean.jsonl`.
+The `process_dataset.py` script collects repositories and creates the `data/dataset_clean.jsonl` file.
 
 ```powershell
 python process_dataset.py
 ```
 
-> Ajuste o arquivo `data/data.csv` conforme a fonte de repositórios que você deseja usar.
+> Adjust the `data/data.csv` file according to the repository source you want to use.
 
-### 3. Executar o treinamento
+### 3. Run the training
 
 ```powershell
 python training.py
 ```
 
-Esse script:
+This script:
 
-- carrega o modelo base;
-- aplica QLoRA;
-- treina sobre o dataset JSONL;
-- salva checkpoints e o adaptador final em `modelo_microsservicos_qlora`.
+- loads the base model;
+- applies QLoRA;
+- trains on the JSONL dataset;
+- saves checkpoints and the final adapter in `microservices_model_qlora`.
 
-Se houver checkpoints antigos, o treinamento tenta retomar automaticamente do último ponto salvo.
+If older checkpoints exist, training will automatically resume from the most recent saved point.
 
-### 4. Rodar inferência
+### 4. Run inference
 
-Depois do treinamento, teste a geração de código com:
+After training, test code generation with:
 
 ```powershell
 python inferencia.py
 ```
 
-O script usa um prompt de exemplo em TypeScript e gera a continuação do código utilizando o modelo adaptado.
+The script uses a sample TypeScript prompt and generates the continuation of the code using the adapted model.
 
-### 5. Testar um checkpoint específico
+### 5. Test a specific checkpoint
 
-Se quiser verificar uma etapa específica do treino:
+If you want to validate a specific training stage:
 
 ```powershell
 python testar_checkpoint.py
 ```
 
-Antes da execução, edite a variável `CHECKPOINT_DIR` dentro do arquivo para apontar para o diretório correto do checkpoint.
+Before running it, edit the `CHECKPOINT_DIR` variable inside the file to point to the correct checkpoint directory.
 
 ---
 
-## Observações importantes
+## Important notes
 
-- O projeto foi pensado para uso com GPU NVIDIA, especialmente por causa da quantização 4-bit e do treinamento com LoRA.
-- O dataset depende de repositórios reais de microsserviços em TypeScript, então a qualidade dos dados influencia diretamente na qualidade do modelo.
-- A geração de código pode ser mais precisa quando os prompts são bem estruturados e próximos do estilo de arquivo que se deseja criar.
-- O diretório `modelo_microsservicos_qlora` contém o resultado treinado e pode ser reutilizado para inferência sem repetir o treinamento.
+- The project is designed for use with an NVIDIA GPU, especially because of 4-bit quantization and LoRA-based training.
+- The dataset depends on real repositories of TypeScript microservices; therefore, data quality directly affects model quality.
+- Code generation can be more accurate when prompts are well structured and close to the file style you want to generate.
+- The `microservices_model_qlora` directory contains the trained result and can be reused for inference without retraining.
 
 ---
 
-## Resultado esperado
+## Expected outcome
 
-Com o treinamento concluído, o modelo deve ser capaz de:
+Once training is complete, the model should be able to:
 
-- completar blocos de código TypeScript;
-- continuar arquivos com estrutura de microsserviços;
-- sugerir padrões de controllers, services, interfaces e imports;
-- manter maior coerência sintática em trechos de código.
+- complete TypeScript code blocks;
+- continue files with microservice architecture structure;
+- suggest patterns for controllers, services, interfaces, and imports;
+- maintain greater syntactic consistency in code snippets.
 
-Esse repositório representa uma base funcional de um TCC em IA aplicada à geração de código, com foco em modelos adaptados para linguagem de programação e arquitetura de serviços.
+This repository represents a functional base for an AI applied to code generation in a TCC context, focused on adapted models for programming languages and service architecture.
