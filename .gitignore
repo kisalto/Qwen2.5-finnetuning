@@ -1,2 +1,4 @@
 data/
 .venv/
+microservices_model_qlora/
+__pycache__/
